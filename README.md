@@ -84,3 +84,11 @@ Pull requests welcome! For major changes, please open an issue first.
 
 ## License
 [MIT](LICENSE)
+
+## Troubleshooting
+
+| Error | Solution |
+|-------|----------|
+| `PIL.Image.DecompressionBombError` | Add `Image.MAX_IMAGE_PIXELS = None` to your script |
+| `DataOverflowError` | Reduce QR code content or increase `box_size` |
+| Blank output files | Check file permissions in output directory |
