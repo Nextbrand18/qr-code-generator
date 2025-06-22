@@ -4,6 +4,17 @@ import os
 import re
 from datetime import datetime
 
+import argparse
+
+def parse_arguments():
+    parser = argparse.ArgumentParser(description='Generate customized QR codes')
+    parser.add_argument('--data', help='Data to encode in QR code')
+    parser.add_argument('--owner', help='Owner name text', default="")
+    parser.add_argument('--title', help='Title text', default="")
+    parser.add_argument('--logo', help='Path to logo image', default="")
+    parser.add_argument('--output', help='Output filename', default=None)
+    return parser.parse_args()
+
 def generate_qr_with_customizations(data, owner_name="", title="", logo_path=None, filename=None):
     """
     Generate a QR code with:
@@ -82,6 +93,10 @@ def generate_qr_with_customizations(data, owner_name="", title="", logo_path=Non
     if not filename:
         current_time = datetime.now().strftime("%Y%m%d_%H%M%S")
         filename = f"qrcode_{current_time}.png"
+    else:
+        # Ensure filename has valid image extension
+        if not filename.lower().endswith(('.png', '.jpg', '.jpeg')):
+            filename += ".png"
     
     final_img.save(filename)
     print(f"QR code saved as {filename}")
@@ -104,22 +119,27 @@ def load_font(font_size=28):
     return ImageFont.load_default()
 
 def main():
+    args = parse_arguments()
+    
     print("Advanced QR Code Generator")
     print("-" * 35)
     
-    data = input("Enter data to encode (URL/text): ").strip() or "https://example.com"
-    owner = input("Owner name (leave blank to skip): ").strip()
-    title = input("Title (leave blank to skip): ").strip()
-    logo = input("Logo path (leave blank to skip): ").strip()
-    custom_filename = input("Custom filename (leave blank to auto-generate): ").strip()
+    # Get data - command line argument takes priority
+    data = args.data if args.data else input("Enter data to encode (URL/text): ").strip() or "https://example.com"
+    
+    # Only prompt for inputs that weren't provided via command line
+    owner = args.owner if args.owner != "" else input("Owner name (leave blank to skip): ").strip()
+    title = args.title if args.title != "" else input("Title (leave blank to skip): ").strip()
+    logo = args.logo if args.logo != "" else input("Logo path (leave blank to skip): ").strip()
+    filename = args.output if args.output else input("Custom filename (leave blank to auto-generate): ").strip()
     
     generate_qr_with_customizations(
         data=data,
         owner_name=owner,
         title=title,
         logo_path=logo if logo else None,
-        filename=custom_filename if custom_filename else None
+        filename=filename if filename else None
     )
-
+    
 if __name__ == "__main__":
     main()

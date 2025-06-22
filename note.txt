@@ -31,8 +31,8 @@ Step 17: Consider additional distribution methods
 
 
 bash# Create project folder
-mkdir harvester-qr-generator
-cd harvester-qr-generator
+mkdir qr-generator
+cd qr-generator
 
 # Open in VS Code
 code .
