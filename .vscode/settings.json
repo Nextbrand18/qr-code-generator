@@ -1,0 +1,7 @@
+{
+    "python.defaultInterpreterPath": "C:/Users/deban/Documents/Python Scripts/qr-code-generator/qr_env/Scripts/python.exe",
+    "python.analysis.extraPaths": [
+        "C:/Users/deban/Documents/Python Scripts/qr-code-generator/qr_env/Lib/site-packages"
+    ],
+    "python.terminal.activateEnvironment": true
+}
