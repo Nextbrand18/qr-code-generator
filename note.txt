@@ -75,3 +75,50 @@ git push -u origin main
 
 cp -r ~/Documents/Python Scripts\ qr-generator/. ~/Documents/Python Scripts\ qr-code-generator/
 cp -r ~/"Documents/Python Scripts"/qr-generator/. ~/"Documents/Python Scripts"/qr-code-generator/
+
+
+┌─────────────────────────────────────────────────────────────┐
+│ Frontend: index.html (Enhanced UI)                          │
+│ - User fills form                                            │
+│ - Clicks "Generate QR Code"                                  │
+│ - Sends POST to http://localhost:5000/generate-qr          │
+└────────────────────┬────────────────────────────────────────┘
+                     │
+                     ↓ HTTP POST (FormData)
+┌─────────────────────────────────────────────────────────────┐
+│ Backend: app.py (Flask Server)                              │
+│                                                              │
+│ Line 7: from qrGenerator import generate_qr_with_customizations │
+│         ↑ THIS IS WHERE qrGenerator.py IS REFERENCED         │
+│                                                              │
+│ Line 20: @app.route('/generate-qr', methods=['POST'])      │
+│ Line 28-33: Handles file upload, saves temp logo           │
+│                                                              │
+│ Line 38-43: CALLS qrGenerator.py ↓                         │
+│         result = generate_qr_with_customizations(...)       │
+│                                                              │
+└────────────────────┬────────────────────────────────────────┘
+                     │
+                     ↓ Function Call
+┌─────────────────────────────────────────────────────────────┐
+│ Logic: qrGenerator.py (QR Generation Module)                │
+│ - Creates QR code from data                                 │
+│ - Adds owner name & title text                              │
+│ - Embeds logo in center                                     │
+│ - Saves image to static/qrcodes/                            │
+│ - Returns (PIL.Image, filename)                             │
+└────────────────────┬────────────────────────────────────────┘
+                     │
+                     ↓ Returns result
+┌─────────────────────────────────────────────────────────────┐
+│ Output: static/qrcodes/abc123.png                           │
+│ - QR code image saved to disk                               │
+└────────────────────┬────────────────────────────────────────┘
+                     │
+                     ↓ JSON Response
+┌─────────────────────────────────────────────────────────────┐
+│ Frontend receives:                                           │
+│ {"success": true, "image_url": "/static/qrcodes/abc123.png"}│
+│ - Displays QR code image                                    │
+│ - Enables download button                                   │
+└─────────────────────────────────────────────────────────────┘

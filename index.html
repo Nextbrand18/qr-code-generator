@@ -3,7 +3,8 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>QR Code Generator</title>
+<meta name="description" content="Generate custom QR codes with logos and branding">
+<title>QR Code Generator - Create Custom QR Codes</title>
 <style>
 * {
     margin: 0;
@@ -165,16 +166,45 @@ h2 {
     -webkit-text-fill-color: transparent;
 }
 
+label {
+    display: block;
+    margin-bottom: 8px;
+    font-weight: 600;
+    color: #4a5568;
+    font-size: 0.95rem;
+}
+
+.input-group {
+    margin-bottom: 20px;
+}
+
+.input-hint {
+    font-size: 0.85rem;
+    color: #718096;
+    margin-top: 4px;
+}
+
+.input-error {
+    font-size: 0.85rem;
+    color: #e53e3e;
+    margin-top: 4px;
+    display: none;
+}
+
 input, textarea { 
     width: 100%;
     padding: 14px 16px;
-    margin-bottom: 16px;
     border-radius: 10px;
     border: 2px solid #e2e8f0;
     font-family: inherit;
     font-size: 1rem;
     transition: all 0.3s ease;
     background: white;
+}
+
+input.error, textarea.error {
+    border-color: #e53e3e;
+    background: #fff5f5;
 }
 
 input[type="file"] {
@@ -237,17 +267,17 @@ button::before {
     transition: width 0.6s, height 0.6s;
 }
 
-button:hover::before {
+button:hover:not(:disabled)::before {
     width: 300px;
     height: 300px;
 }
 
-button:hover {
+button:hover:not(:disabled) {
     transform: translateY(-2px);
     box-shadow: 0 6px 20px rgba(0, 0, 0, 0.25);
 }
 
-button:active {
+button:active:not(:disabled) {
     transform: translateY(0);
 }
 
@@ -255,6 +285,11 @@ button:disabled {
     transform: none;
     cursor: not-allowed;
     opacity: 0.6;
+}
+
+button:focus-visible {
+    outline: 3px solid #667eea;
+    outline-offset: 2px;
 }
 
 #generate-btn { 
@@ -269,6 +304,22 @@ button:disabled {
 
 #download-btn:disabled { 
     background: linear-gradient(135deg, #cbd5e0 0%, #a0aec0 100%);
+}
+
+.spinner {
+    display: inline-block;
+    width: 16px;
+    height: 16px;
+    border: 3px solid rgba(255, 255, 255, 0.3);
+    border-top-color: white;
+    border-radius: 50%;
+    animation: spin 0.8s linear infinite;
+    margin-right: 8px;
+    vertical-align: middle;
+}
+
+@keyframes spin {
+    to { transform: rotate(360deg); }
 }
 
 .qr-container { 
@@ -337,6 +388,7 @@ button:disabled {
 .info { color: #4facfe; }
 .error { color: #ff6b9d; }
 .success { color: #5eead4; }
+.warning { color: #fbbf24; }
 
 .status { 
     padding: 16px 20px;
@@ -377,6 +429,24 @@ button:disabled {
     border: 2px solid #60a5fa;
 }
 
+.status.warning {
+    background: linear-gradient(135deg, #fef3c7 0%, #fde68a 100%);
+    color: #92400e;
+    border: 2px solid #fbbf24;
+}
+
+.sr-only {
+    position: absolute;
+    width: 1px;
+    height: 1px;
+    padding: 0;
+    margin: -1px;
+    overflow: hidden;
+    clip: rect(0, 0, 0, 0);
+    white-space: nowrap;
+    border-width: 0;
+}
+
 @media (max-width: 768px) {
     .container {
         margin: 20px;
@@ -399,109 +469,394 @@ button:disabled {
 </head>
 <body>
 <div class="container">
-<header><h1>✨ QR Code Generator</h1></header>
+<header>
+    <h1>✨ QR Code Generator</h1>
+    <p>Create secure, custom QR codes with optional branding</p>
+</header>
 
 <div class="content">
 <div class="input-section">
 <h2>⚙️ QR Code Settings</h2>
-<textarea id="qr-content" placeholder="Enter content to encode (URL, text, etc.)" rows="3">https://example.com</textarea>
-<input type="text" id="qr-owner" placeholder="Owner Name (optional)">
-<input type="text" id="qr-title" placeholder="Title (optional)">
-<input type="file" id="qr-logo" accept="image/*">
-<button id="generate-btn">Generate QR Code</button>
-<button id="download-btn" disabled>Download QR Code</button>
-<div class="status info" id="connection-status">🔌 Ready to connect to backend</div>
+
+<form id="qr-form" novalidate>
+    <div class="input-group">
+        <label for="qr-content">Content <span style="color:#e53e3e;">*</span></label>
+        <textarea 
+            id="qr-content" 
+            placeholder="Enter URL or text to encode" 
+            rows="3" 
+            required
+            aria-describedby="content-hint content-error"
+            maxlength="2000"
+        >https://example.com</textarea>
+        <div class="input-hint" id="content-hint">Maximum 2000 characters</div>
+        <div class="input-error" id="content-error" role="alert"></div>
+    </div>
+
+    <div class="input-group">
+        <label for="qr-owner">Owner Name</label>
+        <input 
+            type="text" 
+            id="qr-owner" 
+            placeholder="Optional: Your name or company"
+            aria-describedby="owner-hint"
+            maxlength="100"
+        >
+        <div class="input-hint" id="owner-hint">Will be embedded in QR metadata</div>
+    </div>
+
+    <div class="input-group">
+        <label for="qr-title">Title</label>
+        <input 
+            type="text" 
+            id="qr-title" 
+            placeholder="Optional: QR code title"
+            aria-describedby="title-hint"
+            maxlength="100"
+        >
+        <div class="input-hint" id="title-hint">Descriptive title for your QR code</div>
+    </div>
+
+    <div class="input-group">
+        <label for="qr-logo">Logo Image</label>
+        <input 
+            type="file" 
+            id="qr-logo" 
+            accept="image/png,image/jpeg,image/jpg,image/webp"
+            aria-describedby="logo-hint logo-error"
+        >
+        <div class="input-hint" id="logo-hint">PNG, JPG, or WebP. Max 5MB</div>
+        <div class="input-error" id="logo-error" role="alert"></div>
+    </div>
+
+    <button type="submit" id="generate-btn" aria-label="Generate QR Code">
+        Generate QR Code
+    </button>
+    <button type="button" id="download-btn" disabled aria-label="Download QR Code">
+        Download QR Code
+    </button>
+</form>
+
+<div class="status info" id="connection-status" role="status" aria-live="polite">
+    🔌 Ready to connect
+</div>
 </div>
 
 <div class="output-section">
 <h2>🎨 Your QR Code</h2>
-<div class="qr-container" id="qrcode"><p>QR Code will appear here</p></div>
+<div class="qr-container" id="qrcode" role="img" aria-label="Generated QR Code">
+    <p>QR Code will appear here</p>
+</div>
 <h2>📋 Console</h2>
-<div class="console" id="console"></div>
+<div class="console" id="console" role="log" aria-live="polite" aria-atomic="false"></div>
 </div>
 </div>
 </div>
 
 <script>
-const contentEl=document.getElementById('qr-content');
-const ownerEl=document.getElementById('qr-owner');
-const titleEl=document.getElementById('qr-title');
-const logoEl=document.getElementById('qr-logo');
-const generateBtn=document.getElementById('generate-btn');
-const downloadBtn=document.getElementById('download-btn');
-const qrcodeDiv=document.getElementById('qrcode');
-const consoleDiv=document.getElementById('console');
-const connectionStatus=document.getElementById('connection-status');
+// Configuration
+const CONFIG = {
+    API_URL: (window.location.hostname === 'localhost' || window.location.hostname === '127.0.0.1')
+        ? 'http://localhost:5000'
+        : (window.API_ENDPOINT || 'https://api.yourproduction.com'),
+    MAX_FILE_SIZE: 5 * 1024 * 1024, // 5MB
+    REQUEST_TIMEOUT: 30000, // 30 seconds
+    MAX_RETRIES: 3,
+    VALID_URL_PATTERN: /^(https?:\/\/)?([\da-z\.-]+)\.([a-z\.]{2,6})([\/\w \.-]*)*\/?$/
+};
 
-function addConsole(msg,type='info'){
-    const line=document.createElement('div');
-    line.className=`console-line ${type}`;
-    const timestamp = new Date().toLocaleTimeString();
-    line.textContent=`[${timestamp}] ${msg}`;
-    consoleDiv.appendChild(line);
-    consoleDiv.scrollTop=consoleDiv.scrollHeight;
+// DOM Elements
+const contentEl = document.getElementById('qr-content');
+const ownerEl = document.getElementById('qr-owner');
+const titleEl = document.getElementById('qr-title');
+const logoEl = document.getElementById('qr-logo');
+const generateBtn = document.getElementById('generate-btn');
+const downloadBtn = document.getElementById('download-btn');
+const qrcodeDiv = document.getElementById('qrcode');
+const consoleDiv = document.getElementById('console');
+const connectionStatus = document.getElementById('connection-status');
+const qrForm = document.getElementById('qr-form');
+
+// State
+let currentQRImage = null;
+let requestController = null;
+
+// Utility Functions
+function escapeHtml(text) {
+    const div = document.createElement('div');
+    div.textContent = text;
+    return div.innerHTML;
 }
 
-addConsole('System initialized', 'success');
-addConsole('Ready to generate QR codes', 'info');
-
-generateBtn.addEventListener('click', async function(){
-    const content=contentEl.value.trim();
-    const owner=ownerEl.value.trim();
-    const title=titleEl.value.trim();
-    const logo=logoEl.files[0];
-
-    if(!content){ 
-        addConsole('Error: content missing','error'); 
-        return; 
+function addConsole(msg, type = 'info') {
+    const line = document.createElement('div');
+    line.className = `console-line ${type}`;
+    const timestamp = new Date().toLocaleTimeString();
+    line.textContent = `[${timestamp}] ${msg}`;
+    consoleDiv.appendChild(line);
+    consoleDiv.scrollTop = consoleDiv.scrollHeight;
+    
+    // Keep console from growing too large
+    while (consoleDiv.children.length > 50) {
+        consoleDiv.removeChild(consoleDiv.firstChild);
     }
+}
 
-    const formData=new FormData();
-    formData.append('content', content);
-    formData.append('owner', owner);
-    formData.append('title', title);
-    if(logo) {
-        formData.append('logo', logo);
-        addConsole('Logo file attached: ' + logo.name, 'info');
+function showError(inputEl, errorElId, message) {
+    const errorEl = document.getElementById(errorElId);
+    inputEl.classList.add('error');
+    inputEl.setAttribute('aria-invalid', 'true');
+    errorEl.textContent = message;
+    errorEl.style.display = 'block';
+}
+
+function clearError(inputEl, errorElId) {
+    const errorEl = document.getElementById(errorElId);
+    inputEl.classList.remove('error');
+    inputEl.setAttribute('aria-invalid', 'false');
+    errorEl.textContent = '';
+    errorEl.style.display = 'none';
+}
+
+function validateContent(content) {
+    if (!content || content.trim().length === 0) {
+        return { valid: false, error: 'Content is required' };
     }
+    if (content.length > 2000) {
+        return { valid: false, error: 'Content exceeds maximum length of 2000 characters' };
+    }
+    return { valid: true };
+}
 
-    qrcodeDiv.innerHTML='<p style="color:#667eea;">🔄 Generating your QR code...</p>';
-    generateBtn.disabled=true;
-    addConsole('Sending request to backend...', 'info');
+function validateURL(url) {
+    try {
+        new URL(url);
+        return true;
+    } catch {
+        return CONFIG.VALID_URL_PATTERN.test(url);
+    }
+}
 
-    try{
-        const res=await fetch('http://localhost:5000/generate-qr',{method:'POST', body:formData});
-        const data=await res.json();
-        if(data.success){
-            addConsole('✓ QR code generated successfully','success');
-            const img=document.createElement('img');
-            img.src=data.image_url+'?t='+new Date().getTime();
-            qrcodeDiv.innerHTML=''; 
-            qrcodeDiv.appendChild(img);
-            downloadBtn.disabled=false;
-            connectionStatus.className='status success';
-            connectionStatus.textContent='✓ Connected to backend';
-        }else throw new Error(data.error||'Unknown error');
-    }catch(err){
-        addConsole('✗ Error: '+err.message,'error');
-        connectionStatus.className='status error';
-        connectionStatus.textContent='✗ Cannot connect to backend';
-        qrcodeDiv.innerHTML='<p style="color:#ff6b9d;">Error connecting to backend. Make sure the server is running on port 5000.</p>';
-    }finally{
-        generateBtn.disabled=false;
+function validateFile(file) {
+    if (!file) return { valid: true };
+    
+    const validTypes = ['image/png', 'image/jpeg', 'image/jpg', 'image/webp'];
+    if (!validTypes.includes(file.type)) {
+        return { valid: false, error: 'Please upload a PNG, JPG, or WebP image' };
+    }
+    
+    if (file.size > CONFIG.MAX_FILE_SIZE) {
+        return { valid: false, error: 'File size must be less than 5MB' };
+    }
+    
+    return { valid: true };
+}
+
+function setButtonLoading(button, isLoading, loadingText) {
+    if (isLoading) {
+        button.dataset.originalText = button.textContent;
+        button.innerHTML = `<span class="spinner"></span>${loadingText}`;
+        button.disabled = true;
+    } else {
+        button.textContent = button.dataset.originalText || button.textContent;
+        button.disabled = false;
+    }
+}
+
+function updateConnectionStatus(status, message) {
+    connectionStatus.className = `status ${status}`;
+    const icons = {
+        success: '✓',
+        error: '✗',
+        warning: '⚠',
+        info: '🔌'
+    };
+    connectionStatus.textContent = `${icons[status]} ${message}`;
+}
+
+async function fetchWithTimeout(url, options, timeout = CONFIG.REQUEST_TIMEOUT) {
+    requestController = new AbortController();
+    const timeoutId = setTimeout(() => requestController.abort(), timeout);
+    
+    try {
+        const response = await fetch(url, {
+            ...options,
+            signal: requestController.signal
+        });
+        clearTimeout(timeoutId);
+        return response;
+    } catch (error) {
+        clearTimeout(timeoutId);
+        throw error;
+    }
+}
+
+async function generateQRWithRetry(formData, retries = CONFIG.MAX_RETRIES) {
+    for (let i = 0; i < retries; i++) {
+        try {
+            addConsole(`Attempt ${i + 1}/${retries}: Sending request...`, 'info');
+            
+            const response = await fetchWithTimeout(
+                `${CONFIG.API_URL}/generate-qr`,
+                { method: 'POST', body: formData }
+            );
+            
+            if (!response.ok) {
+                throw new Error(`HTTP ${response.status}: ${response.statusText}`);
+            }
+            
+            const data = await response.json();
+            return data;
+            
+        } catch (error) {
+            if (error.name === 'AbortError') {
+                throw new Error('Request timed out. Please try again.');
+            }
+            
+            if (i === retries - 1) throw error;
+            
+            const delay = Math.min(1000 * Math.pow(2, i), 5000);
+            addConsole(`Retry in ${delay}ms...`, 'warning');
+            await new Promise(resolve => setTimeout(resolve, delay));
+        }
+    }
+}
+
+// Event Handlers
+contentEl.addEventListener('input', () => {
+    clearError(contentEl, 'content-error');
+});
+
+logoEl.addEventListener('change', () => {
+    clearError(logoEl, 'logo-error');
+    const file = logoEl.files[0];
+    if (file) {
+        const validation = validateFile(file);
+        if (!validation.valid) {
+            showError(logoEl, 'logo-error', validation.error);
+            logoEl.value = '';
+        }
     }
 });
 
-downloadBtn.addEventListener('click', function(){
-    const img=qrcodeDiv.querySelector('img');
-    if(!img) return;
-    const link=document.createElement('a');
-    link.href=img.src; 
-    link.download='qrcode.png';
-    document.body.appendChild(link); 
-    link.click(); 
-    document.body.removeChild(link);
-    addConsole('✓ QR code downloaded successfully','success');
+qrForm.addEventListener('submit', async function(e) {
+    e.preventDefault();
+    
+    // Clear previous errors
+    clearError(contentEl, 'content-error');
+    clearError(logoEl, 'logo-error');
+    
+    // Validate inputs
+    const content = contentEl.value.trim();
+    const contentValidation = validateContent(content);
+    
+    if (!contentValidation.valid) {
+        showError(contentEl, 'content-error', contentValidation.error);
+        addConsole('Validation failed: ' + contentValidation.error, 'error');
+        contentEl.focus();
+        return;
+    }
+    
+    const logo = logoEl.files[0];
+    const fileValidation = validateFile(logo);
+    
+    if (!fileValidation.valid) {
+        showError(logoEl, 'logo-error', fileValidation.error);
+        addConsole('Validation failed: ' + fileValidation.error, 'error');
+        return;
+    }
+    
+    // Prepare form data
+    const formData = new FormData();
+    formData.append('content', content);
+    formData.append('owner', ownerEl.value.trim());
+    formData.append('title', titleEl.value.trim());
+    if (logo) {
+        formData.append('logo', logo);
+        addConsole(`Logo attached: ${escapeHtml(logo.name)} (${(logo.size / 1024).toFixed(1)}KB)`, 'info');
+    }
+    
+    // UI updates
+    qrcodeDiv.innerHTML = '<p style="color:#667eea;">🔄 Generating your QR code...</p>';
+    setButtonLoading(generateBtn, true, 'Generating...');
+    downloadBtn.disabled = true;
+    currentQRImage = null;
+    
+    try {
+        const data = await generateQRWithRetry(formData);
+        
+        if (data.success) {
+            addConsole('✓ QR code generated successfully', 'success');
+            
+            const img = document.createElement('img');
+            img.src = data.image_url + '?t=' + new Date().getTime();
+            img.alt = 'Generated QR Code for: ' + content;
+            img.onload = () => {
+                qrcodeDiv.innerHTML = '';
+                qrcodeDiv.appendChild(img);
+                currentQRImage = img.src;
+                downloadBtn.disabled = false;
+                updateConnectionStatus('success', 'Connected to backend');
+                addConsole('QR code ready for download', 'success');
+            };
+            img.onerror = () => {
+                throw new Error('Failed to load generated QR code image');
+            };
+        } else {
+            throw new Error(data.error || 'Unknown error occurred');
+        }
+        
+    } catch (err) {
+        const errorMsg = err.message || 'Network error occurred';
+        addConsole('✗ Error: ' + errorMsg, 'error');
+        updateConnectionStatus('error', 'Backend connection failed');
+        qrcodeDiv.innerHTML = `<p style="color:#ff6b9d;">⚠ ${escapeHtml(errorMsg)}<br><small>Make sure the backend server is running on ${CONFIG.API_URL}</small></p>`;
+        
+    } finally {
+        setButtonLoading(generateBtn, false, 'Generate QR Code');
+    }
+});
+
+downloadBtn.addEventListener('click', function() {
+    if (!currentQRImage) {
+        addConsole('No QR code available to download', 'warning');
+        return;
+    }
+    
+    try {
+        const link = document.createElement('a');
+        link.href = currentQRImage;
+        const timestamp = new Date().toISOString().replace(/[:.]/g, '-');
+        link.download = `qrcode-${timestamp}.png`;
+        document.body.appendChild(link);
+        link.click();
+        document.body.removeChild(link);
+        addConsole('✓ QR code downloaded successfully', 'success');
+    } catch (err) {
+        addConsole('✗ Download failed: ' + err.message, 'error');
+    }
+});
+
+// Keyboard shortcuts
+document.addEventListener('keydown', (e) => {
+    if ((e.ctrlKey || e.metaKey) && e.key === 'Enter') {
+        if (!generateBtn.disabled) {
+            qrForm.dispatchEvent(new Event('submit'));
+        }
+    }
+});
+
+// Initialize
+addConsole('System initialized', 'success');
+addConsole('Ready to generate QR codes', 'info');
+addConsole(`Backend URL: ${CONFIG.API_URL}`, 'info');
+updateConnectionStatus('info', 'Ready to connect');
+
+// Cleanup on page unload
+window.addEventListener('beforeunload', () => {
+    if (requestController) {
+        requestController.abort();
+    }
 });
 </script>
 </body>
